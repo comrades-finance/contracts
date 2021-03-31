@@ -5,5 +5,10 @@
 /migrations/
 /build/
 /test/
+/libs/
 /accounts.json
 /truffle-config.js
+/farm-config.json
+/.secret
+/farm-config*
+/package-lock.json
