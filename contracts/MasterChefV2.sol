@@ -9,8 +9,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import "./RewardToken.sol";
+import "./libs/Bonus.sol";
 
-contract MasterChefV2 is Ownable, ReentrancyGuard {
+contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
@@ -35,8 +36,6 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
     address public devaddr;
     // REWARD tokens created per block.
     uint256 public rewardPerBlock;
-    // Bonus muliplier for early reward makers.
-    uint256 public constant BONUS_MULTIPLIER = 1;
     // Deposit Fee address
     address public feeAddress;
 
@@ -110,8 +109,8 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
     }
 
     // Return reward multiplier over the given _from to _to block.
-    function getMultiplier(uint256 _from, uint256 _to) public pure returns (uint256) {
-        return _to.sub(_from).mul(BONUS_MULTIPLIER);
+    function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+        return _to.sub(_from).mul(getBonusMultiplier());
     }
 
     // View function to see pending REWARDs on frontend.
@@ -162,7 +161,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
         }
     } 
 
-    function compound(uint256 _pid) public {
+    function compound(uint256 _pid) public bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         
@@ -178,7 +177,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
     }
 
     // Deposit LP tokens to MasterChef for REWARD allocation.
-    function deposit(uint256 _pid, uint256 _amount) external nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount) external nonReentrant bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -203,7 +202,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard {
     }
 
     // Withdraw LP tokens from MasterChef.
-    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
+    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
