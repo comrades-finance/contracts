@@ -148,20 +148,28 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 rewardReward = multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        reward.mint(devaddr, rewardReward.div(10));
-        reward.mint(address(this), rewardReward);
-        pool.accRewardPerShare = pool.accRewardPerShare.add(rewardReward.mul(1e12).div(lpSupply));
+        if (rewardReward > 0) {
+            reward.mint(devaddr, rewardReward.div(10));
+            reward.mint(address(this), rewardReward);
+            pool.accRewardPerShare = pool.accRewardPerShare.add(rewardReward.mul(1e12).div(lpSupply));
+        }
         pool.lastRewardBlock = block.number;
     }
 
     function compoundAll() external {
+        updatePool(0);
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
-            compound(pid);
+            _compound(pid);
         }
-    } 
+    }
 
-    function compound(uint256 _pid) public bonusCheck {
+    function compound(uint256 _pid) external {
+        updatePool(0);
+        _compound(_pid);
+    }
+
+    function _compound(uint256 _pid) internal bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         
@@ -170,7 +178,10 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
             uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
             if (pending > 0) {
                 userInfo[0][msg.sender].amount = userInfo[0][msg.sender].amount.add(pending);
+
                 user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
+                userInfo[0][msg.sender].rewardDebt = userInfo[0][msg.sender].amount.mul(poolInfo[0].accRewardPerShare).div(1e12);
+                
                 emit Deposit(msg.sender, 0, pending);
             }
         }
