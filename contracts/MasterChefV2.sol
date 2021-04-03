@@ -80,7 +80,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
-    function add(uint256 _allocPoint, IBEP20 _lpToken, uint16 _depositFeeBP, bool _withUpdate) external onlyOwner nonDuplicated(_lpToken) {
+    function add(uint256 _allocPoint, IBEP20 _lpToken, uint16 _depositFeeBP, bool _withUpdate) public onlyOwner nonDuplicated(_lpToken) {
         require(_depositFeeBP <= 10000, "add: invalid deposit fee basis points");
         if (_withUpdate) {
             massUpdatePools();
@@ -98,7 +98,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Update the given pool's REWARD allocation point and deposit fee. Can only be called by the owner.
-    function set(uint256 _pid, uint256 _allocPoint, uint16 _depositFeeBP, bool _withUpdate) external onlyOwner {
+    function set(uint256 _pid, uint256 _allocPoint, uint16 _depositFeeBP, bool _withUpdate) public onlyOwner {
         require(_depositFeeBP <= 10000, "set: invalid deposit fee basis points");
         if (_withUpdate) {
             massUpdatePools();
@@ -156,7 +156,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
         pool.lastRewardBlock = block.number;
     }
 
-    function compoundAll() external {
+    function compoundAll() public {
         updatePool(0);
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
@@ -164,7 +164,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
         }
     }
 
-    function compound(uint256 _pid) external {
+    function compound(uint256 _pid) public {
         updatePool(0);
         _compound(_pid);
     }
@@ -188,7 +188,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Deposit LP tokens to MasterChef for REWARD allocation.
-    function deposit(uint256 _pid, uint256 _amount) external nonReentrant bonusCheck {
+    function deposit(uint256 _pid, uint256 _amount) public nonReentrant bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -213,7 +213,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Withdraw LP tokens from MasterChef.
-    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant bonusCheck {
+    function withdraw(uint256 _pid, uint256 _amount) public nonReentrant bonusCheck {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -231,7 +231,7 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw(uint256 _pid) external nonReentrant {
+    function emergencyWithdraw(uint256 _pid) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         uint256 amount = user.amount;
@@ -254,20 +254,20 @@ contract MasterChefV2 is Ownable, ReentrancyGuard, Bonus {
     }
 
     // Update dev address by the previous dev.
-    function dev(address _devaddr) external {
+    function dev(address _devaddr) public {
         require(msg.sender == devaddr, "dev: wut?");
         devaddr = _devaddr;
         emit SetDevAddress(msg.sender, _devaddr);
     }
 
-    function setFeeAddress(address _feeAddress) external {
+    function setFeeAddress(address _feeAddress) public {
         require(msg.sender == feeAddress, "setFeeAddress: FORBIDDEN");
         feeAddress = _feeAddress;
         emit SetFeeAddress(msg.sender, _feeAddress);
     }
 
     //Pancake has to add hidden dummy pools inorder to alter the emission, here we make it simple and transparent to all.
-    function updateEmissionRate(uint256 _rewardPerBlock) external onlyOwner {
+    function updateEmissionRate(uint256 _rewardPerBlock) public onlyOwner {
         massUpdatePools();
         rewardPerBlock = _rewardPerBlock;
         emit UpdateEmissionRate(msg.sender, _rewardPerBlock);
